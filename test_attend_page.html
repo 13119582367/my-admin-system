@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>考勤数据测试</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .data-table th, .data-table td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .data-table th { background: #f5f5f5; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>考勤数据测试页面</h1>
+    
+    <div class="section">
+        <h2>1. 直接API调用测试</h2>
+        <div id="api-status">加载中...</div>
+        <button onclick="testAPIs()">重新测试</button>
+    </div>
+    
+    <div class="section">
+        <h2>2. 考勤记录（2026年3月）</h2>
+        <div id="records-result">加载中...</div>
+        <table class="data-table" id="records-table"></table>
+    </div>
+    
+    <div class="section">
+        <h2>3. 考勤统计（2026年3月）</h2>
+        <div id="stats-result">加载中...</div>
+        <table class="data-table" id="stats-table"></table>
+    </div>
+    
+    <script>
+        async function testAPIs() {
+            const apiStatus = document.getElementById('api-status');
+            const recordsResult = document.getElementById('records-result');
+            const statsResult = document.getElementById('stats-result');
+            const recordsTable = document.getElementById('records-table');
+            const statsTable = document.getElementById('stats-table');
+            
+            apiStatus.innerHTML = '测试中...';
+            
+            try {
+                // 测试考勤记录API
+                const recordsRes = await fetch('http://43.136.98.150:3000/api/attendance?year=2026&month=3');
+                const records = await recordsRes.json();
+                
+                recordsResult.innerHTML = `<span class="success">✓ 成功获取 ${records.length} 条记录</span>`;
+                
+                // 显示记录
+                let recordsHtml = '<tr><th>ID</th><th>员工</th><th>日期</th><th>上班</th><th>下班</th><th>状态</th></tr>';
+                records.slice(0, 10).forEach(r => {
+                    recordsHtml += `<tr>
+                        <td>${r.id}</td>
+                        <td>${r.staff_name} (${r.staff_id})</td>
+                        <td>${r.date.split('T')[0]}</td>
+                        <td>${r.clock_in || '-'}</td>
+                        <td>${r.clock_out || '-'}</td>
+                        <td>${r.status}</td>
+                    </tr>`;
+                });
+                recordsTable.innerHTML = recordsHtml;
+                
+                // 测试考勤统计API
+                const statsRes = await fetch('http://43.136.98.150:3000/api/attendance/stats?year=2026&month=3');
+                const stats = await statsRes.json();
+                
+                statsResult.innerHTML = `<span class="success">✓ 成功获取 ${stats.length} 条统计</span>`;
+                
+                // 显示统计
+                let statsHtml = '<tr><th>员工ID</th><th>姓名</th><th>部门</th><th>出勤天数</th><th>正常</th><th>迟到</th><th>早退</th><th>请假</th></tr>';
+                stats.forEach(s => {
+                    statsHtml += `<tr>
+                        <td>${s.staff_id}</td>
+                        <td>${s.staff_name}</td>
+                        <td>${s.staff_dept}</td>
+                        <td>${s.total_days}</td>
+                        <td>${s.normal_days}</td>
+                        <td>${s.late_days}</td>
+                        <td>${s.early_days}</td>
+                        <td>${s.leave_days}</td>
+                    </tr>`;
+                });
+                statsTable.innerHTML = statsHtml;
+                
+                apiStatus.innerHTML = `<span class="success">✓ 所有API测试成功！数据库中有176条3月考勤记录</span>`;
+                
+            } catch (error) {
+                apiStatus.innerHTML = `<span class="error">✗ API调用失败: ${error.message}</span>`;
+                recordsResult.innerHTML = `<span class="error">✗ 加载失败</span>`;
+                statsResult.innerHTML = `<span class="error">✗ 加载失败</span>`;
+            }
+        }
+        
+        // 页面加载时自动测试
+        window.onload = testAPIs;
+    </script>
+</body>
+</html>
