@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>自动登录测试</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>考勤页面自动登录测试</h1>
+    
+    <div class="section">
+        <h2>步骤 1: 登录系统</h2>
+        <p>将使用管理员账号自动登录：admin / 123456</p>
+        <button class="btn" onclick="autoLogin()">自动登录并跳转到考勤页面</button>
+        <div id="login-status"></div>
+    </div>
+    
+    <div class="section">
+        <h2>步骤 2: 手动测试（如果自动登录失败）</h2>
+        <p>URL: <a href="http://43.136.98.150:3000" target="_blank">http://43.136.98.150:3000</a></p>
+        <p>登录信息:</p>
+        <ul>
+            <li>用户名: admin</li>
+            <li>密码: 123456</li>
+        </ul>
+        <p>登录后，请点击左侧菜单的"考勤统计"</p>
+    </div>
+    
+    <script>
+        async function autoLogin() {
+            const statusDiv = document.getElementById('login-status');
+            statusDiv.innerHTML = '正在登录...';
+            
+            try {
+                // 模拟登录API调用
+                const loginRes = await fetch('http://43.136.98.150:3000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: '123456'
+                    })
+                });
+                
+                const loginResult = await loginRes.json();
+                
+                if (loginRes.ok && loginResult.token) {
+                    statusDiv.innerHTML = '✓ 登录成功！';
+                    
+                    // 等待一下然后打开主页面
+                    setTimeout(() => {
+                        // 存储token到localStorage（模拟实际应用）
+                        localStorage.setItem('auth_token', loginResult.token);
+                        
+                        // 打开主页面
+                        window.open('http://43.136.98.150:3000', '_blank');
+                        
+                        statusDiv.innerHTML = '✓ 登录成功！已打开主页面。请点击左侧菜单的"考勤统计"查看数据。';
+                    }, 1000);
+                } else {
+                    statusDiv.innerHTML = `✗ 登录失败: ${loginResult.message || '未知错误'}`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `✗ 登录错误: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
